@@ -104,6 +104,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Hussu Drug Store API' });
 });
 
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Drug Store backend is running. Use /api/health to verify API health.' });
+});
+
 if (isDevelopment) {
   app.use('/install', installRoutes);
 }

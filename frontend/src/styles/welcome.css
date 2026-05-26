@@ -1,0 +1,158 @@
+.welcome-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f8fafc 50%, #dbeafe 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-page::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: 50%;
+}
+
+.welcome-page::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -60px;
+  width: 280px;
+  height: 280px;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 50%;
+}
+
+.welcome-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  padding: 40px 36px;
+}
+
+.welcome-brand {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.welcome-brand .moon-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+}
+
+.welcome-brand h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.welcome-brand p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.welcome-form .form-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.welcome-form .form-control {
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.welcome-btn {
+  width: 100%;
+  padding: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  margin-top: 8px;
+  transition: background 0.15s;
+}
+
+.welcome-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  color: #fff;
+}
+
+.welcome-btn:disabled {
+  opacity: 0.7;
+}
+
+.welcome-roles {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.welcome-roles h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-hint {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.role-hint.admin {
+  border-left: 3px solid var(--primary);
+}
+
+.role-hint.guest {
+  border-left: 3px solid var(--info);
+}
+
+.role-hint strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: var(--text);
+}
+
+.role-hint code {
+  font-size: 11px;
+  color: var(--primary-dark);
+}
+
+.welcome-error {
+  font-size: 13px;
+  margin-top: 12px;
+}

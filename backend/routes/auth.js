@@ -4,7 +4,6 @@ import pool from '../config/db.js';
 import { signToken, authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isDbConnectionError } from '../utils/dbQuery.js';
-import { DEMO_USERS, isDemoLoginAllowed } from '../utils/demoAuth.js';
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = !isProduction;
 
@@ -67,34 +66,18 @@ router.post('/login', async (req, res) => {
           user: payload,
         });
       }
-    } catch (err) {
-      if (!isDbConnectionError(err)) throw err;
-    }
+     } catch (err) {
+       if (!isDbConnectionError(err)) throw err;
+     }
 
-    if (!isDevelopment) {
-      return res.status(503).json({ error: 'Service unavailable' });
-    }
+     // Database unavailable - return service unavailable in production
+     if (isProduction) {
+       return res.status(503).json({ error: 'Service unavailable' });
+     }
 
-    if (!isDemoLoginAllowed()) {
-      return res.status(503).json({ error: 'Database unavailable' });
-    }
-
-    const demo = DEMO_USERS[key];
-    if (!demo) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const validDemo = await bcrypt.compare(password, demo.passwordHash);
-    if (!validDemo) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const payload = userResponse(demo, 8);
-    res.json({
-      token: signToken(payload),
-      user: payload,
-      _fallback: true,
-    });
+     // In development, we still want to return service unavailable when DB is down
+     // rather than falling back to demo users
+     return res.status(503).json({ error: 'Database unavailable' });
   } catch (err) {
     res.status(500).json(loginError(err.message || 'Login failed'));
   }

@@ -21,6 +21,7 @@ const pool = mysql.createPool({
     ? { uri: process.env.DATABASE_URL }
     : {
         host: process.env.DB_HOST || "localhost",
+        port: parseInt(process.env.DB_PORT || "3306", 10),
         user: process.env.DB_USER || (isProduction ? null : "root"),
         password: process.env.DB_PASSWORD || (isProduction ? null : ""),
         database: process.env.DB_NAME || "medicare_drug_store",
@@ -37,7 +38,10 @@ const pool = mysql.createPool({
           ? { ca: process.env.DB_SSL_CA }
           : {
               rejectUnauthorized:
-                process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
+                process.env.DB_SSL_REJECT_UNAUTHORIZED?.toLowerCase() ===
+                "false"
+                  ? false
+                  : isProduction,
             },
       }
     : {}),

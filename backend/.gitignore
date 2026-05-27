@@ -7,3 +7,8 @@ dist/
 .env.example
 *.log
 .DS_Store
+.env*
+*.pem
+*.key
+*.crt
+backend/.env*

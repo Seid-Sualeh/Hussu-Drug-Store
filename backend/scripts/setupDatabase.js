@@ -1,23 +1,23 @@
-import mysql from 'mysql2/promise';
-import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
+import mysql from "mysql2/promise";
+import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { readFileSync } from "fs";
 
 dotenv.config();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const EXPECTED_TABLES = [
-  'users',
-  'categories',
-  'suppliers',
-  'medicines',
-  'stock_movements',
-  'sales',
-  'settings',
-  'notifications',
+  "users",
+  "categories",
+  "suppliers",
+  "medicines",
+  "stock_movements",
+  "sales",
+  "settings",
+  "notifications",
 ];
 
 function log(line) {
@@ -25,24 +25,37 @@ function log(line) {
 }
 
 export async function setupDatabase() {
-  const host = process.env.DB_HOST || 'localhost';
-  const user = process.env.DB_USER || 'root';
-  const password = process.env.DB_PASSWORD || '';
-  const dbName = process.env.DB_NAME || 'medicare_drug_store';
+  const host = process.env.DB_HOST || "localhost";
+  const user = process.env.DB_USER || "root";
+  const password = process.env.DB_PASSWORD || "";
+  const dbName = process.env.DB_NAME || "medicare_drug_store";
+  const port = parseInt(process.env.DB_PORT || "3306", 10);
+  const useSsl = process.env.DB_SSL === "true";
+  const rejectUnauthorized =
+    process.env.DB_SSL_REJECT_UNAUTHORIZED?.toLowerCase() !== "false";
 
-  log('');
-  log('========================================');
-  log('  DATABASE INSTALL - Hussu Drug Store');
-  log('========================================');
+  log("");
+  log("========================================");
+  log("  DATABASE INSTALL - Hussu Drug Store");
+  log("========================================");
   log(`Host: ${host}`);
   log(`Database: ${dbName}`);
-  log('');
+  log("");
 
   const conn = await mysql.createConnection({
     host,
+    port,
     user,
     password,
     multipleStatements: true,
+    connectTimeout: 20000,
+    ...(useSsl
+      ? {
+          ssl: process.env.DB_SSL_CA
+            ? { ca: process.env.DB_SSL_CA }
+            : { rejectUnauthorized },
+        }
+      : {}),
   });
 
   await conn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
@@ -50,14 +63,10 @@ export async function setupDatabase() {
 
   await conn.query(`USE \`${dbName}\``);
 
-  const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
-  const seed = readFileSync(join(__dirname, 'seed.sql'), 'utf8');
-
-  log('');
-  log('Creating tables...');
+  const schema = readFileSync(join(__dirname, "schema.sql"), "utf8");
   await conn.query(schema);
 
-  const [tableRows] = await conn.query('SHOW TABLES');
+  const [tableRows] = await conn.query("SHOW TABLES");
   const createdTables = tableRows.map((row) => Object.values(row)[0]);
 
   EXPECTED_TABLES.forEach((name) => {
@@ -70,104 +79,72 @@ export async function setupDatabase() {
 
   const allPresent = EXPECTED_TABLES.every((t) => createdTables.includes(t));
   if (allPresent) {
-    log('');
-    log(`✓ All tables are created (${EXPECTED_TABLES.length}/${EXPECTED_TABLES.length})`);
+    log("");
+    log(
+      `✓ All tables are created (${EXPECTED_TABLES.length}/${EXPECTED_TABLES.length})`,
+    );
   } else {
-    log('');
-    log(`⚠ Warning: expected ${EXPECTED_TABLES.length} tables, found ${createdTables.length}`);
-  }
-
-  log('');
-  log('Inserting seed data...');
-  await conn.query(seed);
-
-  const [countRows] = await conn.query('SELECT COUNT(*) AS c FROM medicines');
-  let current = countRows[0].c;
-  const targetTotal = 1256;
-
-  const names = [
-    'Ibuprofen', 'Diclofenac', 'Ranitidine', 'Pantoprazole', 'Losartan',
-    'Amlodipine', 'Levothyroxine', 'Salbutamol', 'Montelukast', 'Clopidogrel',
-    'Warfarin', 'Furosemide', 'Hydrochlorothiazide', 'Prednisolone', 'Dexamethasone',
-    'Fluconazole', 'Clotrimazole', 'Betamethasone', 'Telmisartan', 'Rosuvastatin',
-  ];
-  const forms = [
-    '250mg - Tablet', '500mg - Capsule', '5mg - Syrup', '10mg - Injection', '1% - Cream',
-  ];
-
-  while (current < targetTotal) {
-    const batch = [];
-    for (let i = 0; i < 50 && current < targetTotal; i++, current++) {
-      const n = names[current % names.length];
-      const cat = (current % 13) + 1;
-      const sup = (current % 8) + 1;
-      const qtyPattern = current % 47;
-      let qty;
-      if (qtyPattern === 0) qty = 0;
-      else if (qtyPattern < 5) qty = 5 + (current % 8);
-      else if (qtyPattern < 10) qty = 600 + (current % 100);
-      else qty = 20 + (current % 200);
-
-      const minL = 15 + (current % 20);
-      const maxL = 200 + (current % 300);
-      const buy = 5 + (current % 200);
-      const sell = buy + 5 + (current % 50);
-      const monthsAhead = (current % 24) - 2;
-      const expiry = new Date();
-      expiry.setMonth(expiry.getMonth() + monthsAhead);
-
-      batch.push([
-        `${n} ${current}`,
-        forms[current % forms.length],
-        cat,
-        sup,
-        qty,
-        expiry.toISOString().slice(0, 10),
-        minL,
-        maxL,
-        buy,
-        sell,
-        `${String.fromCharCode(65 + (current % 8))}-${String((current % 9) + 1).padStart(2, '0')}-${String((current % 12) + 1).padStart(2, '0')}`,
-        current % 5 === 0 ? 'Bulk stock' : null,
-      ]);
-    }
-    await conn.query(
-      `INSERT INTO medicines (name, strength_form, category_id, supplier_id, qty, expiry_date, min_limit, max_limit, buy_price, sell_price, shelf_no, notes) VALUES ?`,
-      [batch]
+    log("");
+    log(
+      `⚠ Warning: expected ${EXPECTED_TABLES.length} tables, found ${createdTables.length}`,
     );
   }
 
-  const adminHash = await bcrypt.hash('admin123', 10);
-  const guestHash = await bcrypt.hash('guest123', 10);
-  await conn.query('UPDATE users SET password_hash = ? WHERE username = ?', [adminHash, 'admin']);
-  await conn.query('UPDATE users SET password_hash = ? WHERE username = ?', [guestHash, 'guest']);
+  // Upsert minimal admin and guest users (no bulk seeding)
+  const adminEmail =
+    process.env.ADMIN_EMAIL || process.env.email || "hussudrugstore@gmail.com";
+  const adminPassword =
+    process.env.ADMIN_PASSWORD || process.env.password || "hussudrugstore";
+  const guestEmail =
+    process.env.GUEST_EMAIL ||
+    process.env.GUEST_EMAIL ||
+    process.env["GUEST_EMAIL"] ||
+    "guest@hussudrugstore.com";
+  const guestPassword =
+    process.env.GUEST_PASSWORD || process.env.GUEST_PASSWORD || "hussuguest";
 
-  const [[medStats]] = await conn.query(`
-    SELECT COUNT(*) AS medicines, COALESCE(SUM(qty), 0) AS qty
-    FROM medicines
-  `);
-  const [[userCount]] = await conn.query('SELECT COUNT(*) AS c FROM users');
-  const [[catCount]] = await conn.query('SELECT COUNT(*) AS c FROM categories');
-  const [[supCount]] = await conn.query('SELECT COUNT(*) AS c FROM suppliers');
-  const [[notifCount]] = await conn.query('SELECT COUNT(*) AS c FROM notifications');
+  log("");
+  log("Creating admin and guest users...");
 
-  log(`✓ Users: ${userCount.c} (admin + guest)`);
+  const adminHash = await bcrypt.hash(adminPassword, 10);
+  const guestHash = await bcrypt.hash(guestPassword, 10);
+
+  await conn.query(
+    `INSERT INTO users (username, password_hash, name, role, avatar_initials, email, notification_count)
+     VALUES (?, ?, ?, 'admin', ?, ?, 0)
+     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), email = VALUES(email)`,
+    ["admin", adminHash, "Admin", "AD", adminEmail],
+  );
+
+  await conn.query(
+    `INSERT INTO users (username, password_hash, name, role, avatar_initials, email, notification_count)
+     VALUES (?, ?, ?, 'guest', ?, ?, 0)
+     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), email = VALUES(email)`,
+    ["guest", guestHash, "Guest User", "GU", guestEmail],
+  );
+
+  const [[userCount]] = await conn.query("SELECT COUNT(*) AS c FROM users");
+  const [[catCount]] = await conn.query("SELECT COUNT(*) AS c FROM categories");
+  const [[supCount]] = await conn.query("SELECT COUNT(*) AS c FROM suppliers");
+  const [[medStats]] = await conn.query(
+    `SELECT COUNT(*) AS medicines, COALESCE(SUM(qty),0) AS qty FROM medicines`,
+  );
+  const [[notifCount]] = await conn.query(
+    "SELECT COUNT(*) AS c FROM notifications",
+  );
+
+  log(`✓ Users: ${userCount.c} (admin + guest if present)`);
   log(`✓ Categories: ${catCount.c}`);
   log(`✓ Suppliers: ${supCount.c}`);
   log(`✓ Medicines: ${medStats.medicines}`);
   log(`✓ Notifications: ${notifCount.c}`);
-  log(`✓ Stock movements & sales sample rows inserted`);
-  log(`✓ Settings configured`);
-  log('');
-  log('Login credentials:');
-  log('  Admin (full access):  admin / admin123');
-  log('  Guest (view only):    guest / guest123');
-  log('');
-  log('========================================');
-  log('  INSTALL COMPLETE');
-  log('  Open http://localhost:3000/welcome to sign in');
-  log('========================================');
-  log('');
+
+  log("");
+  log("========================================");
+  log("  INSTALL COMPLETE");
+  log("  Open http://localhost:3000/welcome to sign in");
+  log("========================================");
+  log("");
 
   await conn.end();
 
@@ -187,13 +164,23 @@ export async function setupDatabase() {
       notifications: Number(notifCount.c),
     },
     logins: [
-      { role: 'admin', username: 'admin', password: 'admin123', access: 'Full access (add, edit, delete)' },
-      { role: 'guest', username: 'guest', password: 'guest123', access: 'View only' },
+      {
+        role: "admin",
+        username: "admin",
+        password: adminPassword,
+        access: "Full access (add, edit, delete)",
+      },
+      {
+        role: "guest",
+        username: "guest",
+        password: guestPassword,
+        access: "View only",
+      },
     ],
     nextSteps: [
-      'Start backend: cd backend && node server.js',
-      'Start frontend: cd frontend && npm run dev',
-      'Open http://localhost:3000/welcome and sign in',
+      "Start backend: cd backend && node server.js",
+      "Start frontend: cd frontend && npm run dev",
+      "Open http://localhost:3000/welcome and sign in",
     ],
   };
 }
@@ -202,14 +189,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   setupDatabase()
     .then(() => process.exit(0))
     .catch((err) => {
-      console.error('');
-      console.error('INSTALL FAILED:', err.message || err);
-      console.error('');
-      console.error('Fix:');
-      console.error('  1. Start MySQL (Docker: docker compose up -d)');
-      console.error('  2. Set backend/.env → DB_HOST, DB_USER, DB_PASSWORD');
-      console.error('  3. Visit http://localhost:5000/install again');
-      console.error('');
+      console.error("");
+      console.error("INSTALL FAILED:", err.message || err);
+      console.error("");
+      console.error("Fix:");
+      console.error("  1. Start MySQL (Docker: docker compose up -d)");
+      console.error("  2. Set backend/.env → DB_HOST, DB_USER, DB_PASSWORD");
+      console.error("  3. Visit http://localhost:5000/install again");
+      console.error("");
       process.exit(1);
     });
 }

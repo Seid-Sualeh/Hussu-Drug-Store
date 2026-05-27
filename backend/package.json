@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "db:setup": "node scripts/setupDatabase.js",
-    "test:api": "node scripts/apiSmokeTest.js"
+    "db:setup": "node scripts/setupDatabase.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import pool from '../config/db.js';
 import { formatMedicineRow, getStockStatus, getExpiryInfo } from '../utils/inventoryHelpers.js';
-import { withDb, dbErrorMessage } from '../utils/dbQuery.js';
-import { getStatsFallback } from '../utils/fallbackData.js';
 import { validateMedicineBody } from '../utils/validateMedicine.js';
 
 const router = Router();
@@ -54,8 +52,7 @@ function buildWhere(filters) {
 router.get('/stats', async (req, res) => {
   try {
     const sessionUser = req.user;
-    const data = await withDb(async (db) => {
-      const [[totals]] = await db.query(`
+    const [[totals]] = await pool.query(`
         SELECT
           COUNT(*) AS totalMedicines,
           COALESCE(SUM(qty), 0) AS totalQuantity,
@@ -68,55 +65,41 @@ router.get('/stats', async (req, res) => {
         FROM medicines
       `);
 
-      let notificationCount = 0;
-      try {
-        const [[notif]] = await db.query(
-          'SELECT COUNT(*) AS count FROM notifications WHERE is_read = 0'
-        );
-        notificationCount = Number(notif.count);
-      } catch {
-        notificationCount = 0;
-      }
+    let notificationCount = 0;
+    try {
+      const [[notif]] = await pool.query(
+        'SELECT COUNT(*) AS count FROM notifications WHERE is_read = 0'
+      );
+      notificationCount = Number(notif.count);
+    } catch {
+      notificationCount = 0;
+    }
 
-      return {
-        totalMedicines: Number(totals.totalMedicines),
-        totalQuantity: Number(totals.totalQuantity),
-        inventoryValue: Number(totals.inventoryValue),
-        totalItems: Number(totals.totalMedicines),
-        expiringIn6Months: Number(totals.expiringIn6Months),
-        lowStock: Number(totals.lowStock),
-        overStock: Number(totals.overStock),
-        outOfStock: Number(totals.outOfStock),
-        totalProfit: Number(totals.totalProfit),
-        user: sessionUser
-          ? {
-              id: sessionUser.id,
-              name: sessionUser.name,
-              role: sessionUser.role,
-              avatar_initials: sessionUser.avatar_initials,
-              email: sessionUser.email,
-              notification_count: notificationCount,
-            }
-          : getStatsFallback().user,
-      };
-    }, () => {
-      const fb = getStatsFallback();
-      if (sessionUser) {
-        fb.user = {
+    const response = {
+      totalMedicines: Number(totals.totalMedicines),
+      totalQuantity: Number(totals.totalQuantity),
+      inventoryValue: Number(totals.inventoryValue),
+      totalItems: Number(totals.totalMedicines),
+      expiringIn6Months: Number(totals.expiringIn6Months),
+      lowStock: Number(totals.lowStock),
+      overStock: Number(totals.overStock),
+      outOfStock: Number(totals.outOfStock),
+      totalProfit: Number(totals.totalProfit),
+      user: sessionUser
+        ? {
           id: sessionUser.id,
           name: sessionUser.name,
           role: sessionUser.role,
           avatar_initials: sessionUser.avatar_initials,
           email: sessionUser.email,
-          notification_count: fb.user.notification_count,
-        };
-      }
-      return fb;
-    });
+          notification_count: notificationCount,
+        }
+        : null,
+    };
 
-    res.json(data);
+    res.json(response);
   } catch (err) {
-    res.status(500).json({ error: dbErrorMessage(err) });
+    res.status(500).json({ error: err.message });
   }
 });
 

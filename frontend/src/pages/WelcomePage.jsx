@@ -40,12 +40,6 @@ export default function WelcomePage() {
     }
   };
 
-  const fillDemo = (user, pass) => {
-    setUsername(user);
-    setPassword(pass);
-    setError('');
-  };
-
   return (
     <div className="welcome-page">
       <div className="welcome-card">
@@ -64,7 +58,7 @@ export default function WelcomePage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin or guest"
+              placeholder="Enter username"
               autoComplete="username"
               required
             />
@@ -85,36 +79,6 @@ export default function WelcomePage() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </Form>
-
-        <div className="welcome-roles">
-          <h3>Demo accounts</h3>
-          <div
-            className="role-hint admin"
-            role="button"
-            tabIndex={0}
-            onClick={() => fillDemo('admin', 'admin123')}
-            onKeyDown={(e) => e.key === 'Enter' && fillDemo('admin', 'admin123')}
-          >
-            <div>
-              <strong>Admin</strong>
-              Full access — add, edit, delete, stock, sales, settings
-              <code className="d-block mt-1">admin / admin123</code>
-            </div>
-          </div>
-          <div
-            className="role-hint guest"
-            role="button"
-            tabIndex={0}
-            onClick={() => fillDemo('guest', 'guest123')}
-            onKeyDown={(e) => e.key === 'Enter' && fillDemo('guest', 'guest123')}
-          >
-            <div>
-              <strong>Guest</strong>
-              View only — browse dashboard &amp; reports, no changes
-              <code className="d-block mt-1">guest / guest123</code>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

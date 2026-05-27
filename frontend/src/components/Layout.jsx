@@ -1,42 +1,41 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Topbar from './Topbar';
-import FooterLegend from './FooterLegend';
-import { api } from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
+import FooterLegend from "./FooterLegend";
+import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
-const SIDEBAR_KEY = 'medicare_sidebar_collapsed';
+const SIDEBAR_KEY = "medicare_sidebar_collapsed";
 
 export default function Layout({ allNavRoutes }) {
   const location = useLocation();
   const { isAdmin, logout } = useAuth();
   const navRoutes = useMemo(
-    () => allNavRoutes.filter((r) => (isAdmin ? true : r.guest && !r.adminOnly)),
-    [allNavRoutes, isAdmin]
+    () =>
+      allNavRoutes.filter((r) => (isAdmin ? true : r.guest && !r.adminOnly)),
+    [allNavRoutes, isAdmin],
   );
 
-  const hideFooter = ['/', '/dashboard', '/reports'].includes(location.pathname);
+  const hideFooter = ["/", "/dashboard", "/reports"].includes(
+    location.pathname,
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
-      return localStorage.getItem(SIDEBAR_KEY) === 'true';
+      return localStorage.getItem(SIDEBAR_KEY) === "true";
     } catch {
       return false;
     }
   });
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [usingFallback, setUsingFallback] = useState(false);
 
   const loadStats = useCallback(() => {
     setStatsLoading(true);
     api
       .getStats()
-      .then((data) => {
-        setStats(data);
-        setUsingFallback(Boolean(data._fallback));
-      })
+      .then(setStats)
       .catch(console.error)
       .finally(() => setStatsLoading(false));
   }, []);
@@ -71,15 +70,11 @@ export default function Layout({ allNavRoutes }) {
   };
 
   return (
-    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
-      {usingFallback && (
-        <div className="db-fallback-banner">
-          <i className="bi bi-database-exclamation" />
-          Demo data — start MySQL, then open <a href="http://localhost:5000/install" target="_blank" rel="noreferrer">localhost:5000/install</a>
-        </div>
-      )}
+    <div
+      className={`app-shell ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}
+    >
       <div
-        className={`sidebar-overlay ${sidebarOpen ? 'show' : ''}`}
+        className={`sidebar-overlay ${sidebarOpen ? "show" : ""}`}
         onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
       />
@@ -96,7 +91,9 @@ export default function Layout({ allNavRoutes }) {
           stats={stats}
           statsLoading={statsLoading}
           onMenuClick={handleMenuClick}
-          onAddMedicine={() => window.dispatchEvent(new CustomEvent('open-medicine-modal'))}
+          onAddMedicine={() =>
+            window.dispatchEvent(new CustomEvent("open-medicine-modal"))
+          }
           onLogout={logout}
           sidebarCollapsed={sidebarCollapsed}
         />

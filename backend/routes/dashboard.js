@@ -1,15 +1,12 @@
 import { Router } from 'express';
 import pool from '../config/db.js';
 import { formatMedicineRow } from '../utils/inventoryHelpers.js';
-import { withDb, dbErrorMessage } from '../utils/dbQuery.js';
-import { getDashboardFallback } from '../utils/fallbackData.js';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const payload = await withDb(async (db) => {
-    const [[summary]] = await db.query(`
+    const [[summary]] = await pool.query(`
       SELECT
         COUNT(*) AS totalMedicines,
         COALESCE(SUM(qty), 0) AS totalQuantity,
@@ -23,7 +20,7 @@ router.get('/', async (req, res) => {
       FROM medicines
     `);
 
-    const [expiryRows] = await db.query(`
+    const [expiryRows] = await pool.query(`
       SELECT m.*, c.name AS category_name, s.name AS supplier_name,
         DATEDIFF(m.expiry_date, CURDATE()) AS days_left
       FROM medicines m
@@ -53,7 +50,7 @@ router.get('/', async (req, res) => {
       };
     });
 
-    const [profitByCategory] = await db.query(`
+    const [profitByCategory] = await pool.query(`
       SELECT
         COALESCE(c.name, 'Uncategorized') AS category,
         COALESCE(c.code, '') AS code,
@@ -67,7 +64,7 @@ router.get('/', async (req, res) => {
       LIMIT 10
     `);
 
-    const [categoryDistribution] = await db.query(`
+    const [categoryDistribution] = await pool.query(`
       SELECT
         COALESCE(c.name, 'Uncategorized') AS category,
         COALESCE(c.code, '') AS code,
@@ -80,7 +77,7 @@ router.get('/', async (req, res) => {
       LIMIT 8
     `);
 
-    const [supplierPerformance] = await db.query(`
+    const [supplierPerformance] = await pool.query(`
       SELECT
         COALESCE(s.name, 'Unknown') AS supplier,
         COUNT(m.id) AS totalMedicines,
@@ -92,7 +89,7 @@ router.get('/', async (req, res) => {
       LIMIT 10
     `);
 
-    const [shelfTracking] = await db.query(`
+    const [shelfTracking] = await pool.query(`
       SELECT
         COALESCE(NULLIF(shelf_no, ''), 'Unassigned') AS shelf,
         COUNT(*) AS medicineCount
@@ -102,7 +99,7 @@ router.get('/', async (req, res) => {
       LIMIT 12
     `);
 
-    const [shelfMedicines] = await db.query(`
+    const [shelfMedicines] = await pool.query(`
       SELECT shelf_no AS shelf, name, strength_form AS strengthForm, qty
       FROM medicines
       WHERE shelf_no IS NOT NULL AND shelf_no != ''
@@ -116,7 +113,7 @@ router.get('/', async (req, res) => {
       if (shelvesMap[m.shelf].length < 5) shelvesMap[m.shelf].push(m);
     });
 
-    const [urgentRows] = await db.query(`
+    const [urgentRows] = await pool.query(`
       SELECT m.*, c.name AS category_name, s.name AS supplier_name
       FROM medicines m
       LEFT JOIN categories c ON m.category_id = c.id
@@ -131,7 +128,7 @@ router.get('/', async (req, res) => {
 
     const urgentReorder = urgentRows.map((row, i) => formatMedicineRow(row, i + 1));
 
-    return {
+    res.json({
       summary: {
         totalMedicines: Number(summary.totalMedicines),
         totalQuantity: Number(summary.totalQuantity),
@@ -173,12 +170,9 @@ router.get('/', async (req, res) => {
         medicines: shelvesMap[r.shelf] || [],
       })),
       urgentReorder,
-    };
-    }, getDashboardFallback);
-
-    res.json(payload);
+    });
   } catch (err) {
-    res.status(500).json({ error: dbErrorMessage(err) });
+    res.status(500).json({ error: err.message });
   }
 });
 

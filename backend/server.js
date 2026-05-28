@@ -77,7 +77,7 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.set("trust proxy", isProduction ? 1 : false);
 
-const rawFrontend = process.env.FRONTEND_URL || "";
+const rawFrontend = process.env.FRONTEND_URL || "http://localhost:3000";
 const allowedOrigins = rawFrontend
   .split(",")
   .map((s) => s.trim())

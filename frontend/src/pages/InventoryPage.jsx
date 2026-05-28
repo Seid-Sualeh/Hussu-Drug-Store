@@ -103,10 +103,27 @@ export default function InventoryPage() {
   const handleSave = async (body) => {
     setSaving(true);
     try {
+      const payload = { ...body };
+
+      if (payload.newCategoryName) {
+        const category = await api.createCategory({ name: payload.newCategoryName.trim() });
+        payload.categoryId = category.id;
+        await api.getCategories().then(setCategories).catch(console.error);
+      }
+
+      if (payload.newSupplierName) {
+        const supplier = await api.createSupplier({ name: payload.newSupplierName.trim() });
+        payload.supplierId = supplier.id;
+        await api.getSuppliers().then(setSuppliers).catch(console.error);
+      }
+
+      delete payload.newCategoryName;
+      delete payload.newSupplierName;
+
       if (editMedicine?.id) {
-        await api.updateMedicine(editMedicine.id, body);
+        await api.updateMedicine(editMedicine.id, payload);
       } else {
-        await api.createMedicine(body);
+        await api.createMedicine(payload);
       }
       setShowModal(false);
       setEditMedicine(null);

@@ -7,7 +7,9 @@ const emptyForm = {
   name: '',
   strengthForm: '',
   categoryId: '',
+  newCategoryName: '',
   supplierId: '',
+  newSupplierName: '',
   qty: 0,
   expiryDate: '',
   minLimit: 10,
@@ -36,7 +38,9 @@ export default function MedicineModal({
         name: medicine.name || '',
         strengthForm: medicine.strengthForm || '',
         categoryId: medicine.categoryId || '',
+        newCategoryName: '',
         supplierId: medicine.supplierId || '',
+        newSupplierName: '',
         qty: medicine.qty ?? 0,
         expiryDate: medicine.expiryDate?.slice?.(0, 10) || medicine.expiryDate || '',
         minLimit: medicine.minLimit ?? 10,
@@ -53,6 +57,22 @@ export default function MedicineModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'categoryId') {
+      setForm((f) => ({ ...f, categoryId: value, newCategoryName: '' }));
+      return;
+    }
+    if (name === 'supplierId') {
+      setForm((f) => ({ ...f, supplierId: value, newSupplierName: '' }));
+      return;
+    }
+    if (name === 'newCategoryName') {
+      setForm((f) => ({ ...f, categoryId: value ? '' : f.categoryId, newCategoryName: value }));
+      return;
+    }
+    if (name === 'newSupplierName') {
+      setForm((f) => ({ ...f, supplierId: value ? '' : f.supplierId, newSupplierName: value }));
+      return;
+    }
     setForm((f) => ({ ...f, [name]: value }));
   };
 
@@ -62,7 +82,9 @@ export default function MedicineModal({
       name: form.name,
       strengthForm: form.strengthForm,
       categoryId: form.categoryId ? Number(form.categoryId) : null,
+      newCategoryName: form.newCategoryName?.trim() || null,
       supplierId: form.supplierId ? Number(form.supplierId) : null,
+      newSupplierName: form.newSupplierName?.trim() || null,
       qty: Number(form.qty),
       expiryDate: form.expiryDate,
       minLimit: Number(form.minLimit),
@@ -111,6 +133,13 @@ export default function MedicineModal({
                     </option>
                   ))}
                 </Form.Select>
+                <Form.Control
+                  className="mt-2"
+                  name="newCategoryName"
+                  value={form.newCategoryName}
+                  onChange={handleChange}
+                  placeholder="Or type a new category"
+                />
               </Form.Group>
             </div>
             <div className="col-md-4">
@@ -124,6 +153,13 @@ export default function MedicineModal({
                     </option>
                   ))}
                 </Form.Select>
+                <Form.Control
+                  className="mt-2"
+                  name="newSupplierName"
+                  value={form.newSupplierName}
+                  onChange={handleChange}
+                  placeholder="Or type a new supplier"
+                />
               </Form.Group>
             </div>
             <div className="col-md-4">

@@ -5,6 +5,69 @@ import { validateMedicineBody } from '../utils/validateMedicine.js';
 
 const router = Router();
 
+function formatDateYMD(date) {
+  if (!date) return null;
+  return date.toISOString().split('T')[0];
+}
+
+function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDate }) {
+  const notifications = [];
+  const today = new Date().toISOString().slice(0, 10);
+  const sixMonths = new Date();
+  sixMonths.setMonth(sixMonths.getMonth() + 6);
+  const sixMonthsDate = sixMonths.toISOString().slice(0, 10);
+
+  if (qty > 0 && qty < minLimit) {
+    notifications.push({
+      title: `Low stock: ${name}`,
+      message: `${name} has only ${qty} unit(s) remaining. Reorder before stock runs out.`,
+      type: 'low_stock',
+    });
+  }
+
+  if (qty > maxLimit) {
+    notifications.push({
+      title: `Over stock: ${name}`,
+      message: `${name} inventory exceeds the maximum of ${maxLimit}. Review ordering levels.`,
+      type: 'over_stock',
+    });
+  }
+
+  if (expiryDate) {
+    const expiry = expiryDate;
+    if (expiry <= today) {
+      notifications.push({
+        title: `Expired: ${name}`,
+        message: `${name} expired on ${expiry}. Remove or mark it immediately.`,
+        type: 'expiry',
+      });
+    } else if (expiry <= sixMonthsDate) {
+      notifications.push({
+        title: `Expiring soon: ${name}`,
+        message: `${name} expires on ${expiry}. Plan moving or discounting stock.`,
+        type: 'expiry',
+      });
+    }
+  }
+
+  return notifications;
+}
+
+async function insertNotifications(items) {
+  for (const { title, message, type } of items) {
+    const [[existing]] = await pool.query(
+      'SELECT COUNT(*) AS count FROM notifications WHERE title = ? AND message = ? AND type = ? AND is_read = 0',
+      [title, message, type],
+    );
+    if (Number(existing.count) === 0) {
+      await pool.query(
+        'INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)',
+        [title, message, type],
+      );
+    }
+  }
+}
+
 const BASE_SELECT = `
   SELECT m.*, c.name AS category_name, s.name AS supplier_name
   FROM medicines m
@@ -218,6 +281,14 @@ router.post('/', async (req, res) => {
       notes,
     } = validation.data;
 
+    const notifications = generateMedicineNotifications({
+      name,
+      qty,
+      minLimit,
+      maxLimit,
+      expiryDate,
+    });
+
     const [result] = await pool.query(
       `INSERT INTO medicines
        (name, strength_form, category_id, supplier_id, qty, expiry_date, min_limit, max_limit, buy_price, sell_price, shelf_no, notes)
@@ -237,6 +308,10 @@ router.post('/', async (req, res) => {
         notes || null,
       ]
     );
+
+    if (notifications.length) {
+      await insertNotifications(notifications);
+    }
 
     const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [result.insertId]);
     res.status(201).json(formatMedicineRow(rows[0], 1));
@@ -266,6 +341,14 @@ router.put('/:id', async (req, res) => {
       notes,
     } = validation.data;
 
+    const notifications = generateMedicineNotifications({
+      name,
+      qty,
+      minLimit,
+      maxLimit,
+      expiryDate,
+    });
+
     await pool.query(
       `UPDATE medicines SET
         name = ?, strength_form = ?, category_id = ?, supplier_id = ?,
@@ -288,6 +371,10 @@ router.put('/:id', async (req, res) => {
         req.params.id,
       ]
     );
+
+    if (notifications.length) {
+      await insertNotifications(notifications);
+    }
 
     const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Medicine not found' });

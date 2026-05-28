@@ -1,15 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useOutletContext, useSearchParams, Link } from 'react-router-dom';
-import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
-import InventoryTable from '../components/InventoryTable';
-import PaginationBar from '../components/PaginationBar';
-import MedicineModal from '../components/MedicineModal';
-import { api } from '../api/client';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { useState, useEffect, useCallback } from "react";
+import { useOutletContext, useSearchParams, Link } from "react-router-dom";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import InventoryTable from "../components/InventoryTable";
+import PaginationBar from "../components/PaginationBar";
+import MedicineModal from "../components/MedicineModal";
+import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
-const defaultPagination = { page: 1, limit: 10, total: 0, totalPages: 1, from: 0, to: 0 };
+const defaultPagination = {
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
+  from: 0,
+  to: 0,
+};
 
 export default function InventoryPage() {
   const { canEdit } = useAuth();
@@ -22,10 +29,10 @@ export default function InventoryPage() {
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [filters, setFilters] = useState({
-    categoryId: 'all',
-    search: searchParams.get('search') || '',
-    expiry: searchParams.get('expiry') || 'all',
-    stockStatus: searchParams.get('stockStatus') || 'all',
+    categoryId: "all",
+    search: searchParams.get("search") || "",
+    expiry: searchParams.get("expiry") || "all",
+    stockStatus: searchParams.get("stockStatus") || "all",
   });
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -39,10 +46,11 @@ export default function InventoryPage() {
     setLoading(true);
     try {
       const params = { page, limit };
-      if (filters.categoryId !== 'all') params.categoryId = filters.categoryId;
+      if (filters.categoryId !== "all") params.categoryId = filters.categoryId;
       if (filters.search) params.search = filters.search;
-      if (filters.expiry !== 'all') params.expiry = filters.expiry;
-      if (filters.stockStatus !== 'all') params.stockStatus = filters.stockStatus;
+      if (filters.expiry !== "all") params.expiry = filters.expiry;
+      if (filters.stockStatus !== "all")
+        params.stockStatus = filters.stockStatus;
 
       const data = await api.getInventory(params);
       setItems(data.items);
@@ -56,8 +64,8 @@ export default function InventoryPage() {
   }, [page, limit, filters, showToast]);
 
   useEffect(() => {
-    const stock = searchParams.get('stockStatus');
-    const expiry = searchParams.get('expiry');
+    const stock = searchParams.get("stockStatus");
+    const expiry = searchParams.get("expiry");
     if (stock || expiry) {
       setFilters((f) => ({
         ...f,
@@ -87,11 +95,11 @@ export default function InventoryPage() {
       setFilters((f) => ({ ...f, search: e.detail }));
       setPage(1);
     };
-    window.addEventListener('open-medicine-modal', openModal);
-    window.addEventListener('inventory-search', onSearch);
+    window.addEventListener("open-medicine-modal", openModal);
+    window.addEventListener("inventory-search", onSearch);
     return () => {
-      window.removeEventListener('open-medicine-modal', openModal);
-      window.removeEventListener('inventory-search', onSearch);
+      window.removeEventListener("open-medicine-modal", openModal);
+      window.removeEventListener("inventory-search", onSearch);
     };
   }, [canEdit]);
 
@@ -106,13 +114,17 @@ export default function InventoryPage() {
       const payload = { ...body };
 
       if (payload.newCategoryName) {
-        const category = await api.createCategory({ name: payload.newCategoryName.trim() });
+        const category = await api.createCategory({
+          name: payload.newCategoryName.trim(),
+        });
         payload.categoryId = category.id;
         await api.getCategories().then(setCategories).catch(console.error);
       }
 
       if (payload.newSupplierName) {
-        const supplier = await api.createSupplier({ name: payload.newSupplierName.trim() });
+        const supplier = await api.createSupplier({
+          name: payload.newSupplierName.trim(),
+        });
         payload.supplierId = supplier.id;
         await api.getSuppliers().then(setSuppliers).catch(console.error);
       }
@@ -129,7 +141,10 @@ export default function InventoryPage() {
       setEditMedicine(null);
       await loadInventory();
       refreshStats?.();
-      showToast(editMedicine?.id ? 'Medicine updated.' : 'Medicine added.', 'success');
+      showToast(
+        editMedicine?.id ? "Medicine updated." : "Medicine added.",
+        "success",
+      );
     } catch (err) {
       showToast(err.message);
     } finally {
@@ -144,7 +159,7 @@ export default function InventoryPage() {
       setDeleteTarget(null);
       await loadInventory();
       refreshStats?.();
-      showToast('Medicine deleted.', 'success');
+      showToast("Medicine deleted.", "success");
     } catch (err) {
       showToast(err.message);
     }
@@ -152,20 +167,49 @@ export default function InventoryPage() {
 
   const exportCsv = () => {
     const headers = [
-      '#', 'Medicine Name', 'Qty', 'Expiry', 'Exp 6mo', 'Alert', 'Min', 'Max',
-      'Status', 'Buy', 'Sell', 'Profit', 'Profit%', 'Supplier', 'Shelf', 'Notes',
+      "#",
+      "Medicine Name",
+      "Qty",
+      "Expiry",
+      "Exp 6mo",
+      "Alert",
+      "Min",
+      "Max",
+      "Status",
+      "Buy",
+      "Sell",
+      "Profit",
+      "Profit%",
+      "Supplier",
+      "Shelf",
+      "Notes",
     ];
     const rows = items.map((r) => [
-      r.index, r.displayName, r.qty, r.expiryDate, r.expIn6Months, r.alert,
-      r.minLimit, r.maxLimit, r.stockStatus, r.buyPrice, r.sellPrice, r.profit,
-      r.profitPct, r.supplierName, r.shelfNo, r.notes,
+      r.index,
+      r.displayName,
+      r.qty,
+      r.expiryDate,
+      r.expIn6Months,
+      r.alert,
+      r.minLimit,
+      r.maxLimit,
+      r.stockStatus,
+      r.buyPrice,
+      r.sellPrice,
+      r.profit,
+      r.profitPct,
+      r.supplierName,
+      r.shelfNo,
+      r.notes,
     ]);
-    const csv = [headers, ...rows].map((row) => row.map((c) => `"${c}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers, ...rows]
+      .map((row) => row.map((c) => `"${c}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'medicare-inventory.csv';
+    a.download = "medicare-inventory.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -174,10 +218,17 @@ export default function InventoryPage() {
     <>
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <h2 className="mb-1" style={{ fontSize: '22px', fontWeight: 700 }}>Inventory / Medicine List</h2>
-          <p className="text-muted mb-0 small">Full medicine table with filters, export & CRUD</p>
+          <h2 className="mb-1" style={{ fontSize: "22px", fontWeight: 700 }}>
+            Inventory / Medicine List
+          </h2>
+          <p className="text-muted mb-0 small">
+            Full medicine table with filters, export & CRUD
+          </p>
         </div>
-        <Link to="/dashboard" className="btn-outline-green text-decoration-none">
+        <Link
+          to="/dashboard"
+          className="btn-outline-green text-decoration-none"
+        >
           <i className="bi bi-speedometer2" /> Dashboard
         </Link>
       </div>
@@ -186,7 +237,11 @@ export default function InventoryPage() {
         <div className="inventory-header">
           <h2 className="visually-hidden">Inventory filters</h2>
           <div className="actions">
-            <button type="button" className="btn-outline-green" onClick={exportCsv}>
+            <button
+              type="button"
+              className="btn-outline-green"
+              onClick={exportCsv}
+            >
               <i className="bi bi-download" />
               Export
             </button>
@@ -209,7 +264,7 @@ export default function InventoryPage() {
         <div className="filters-row">
           <select
             value={filters.categoryId}
-            onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+            onChange={(e) => handleFilterChange("categoryId", e.target.value)}
           >
             <option value="all">All Categories</option>
             {categories.map((c) => (
@@ -224,26 +279,29 @@ export default function InventoryPage() {
             className="search-input"
             placeholder="Search medicine..."
             value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
           />
 
           <div className="position-relative d-inline-block">
-          <i className="bi bi-calendar3 position-absolute text-muted" style={{ left: 10, top: 10, zIndex: 1, pointerEvents: 'none' }} />
-          <select
-            className="ps-4"
-            value={filters.expiry}
-            onChange={(e) => handleFilterChange('expiry', e.target.value)}
-          >
-            <option value="all">Expiry: All</option>
-            <option value="expiring">Expiring in 6 Months</option>
-            <option value="expired">Expired</option>
-            <option value="safe">Safe</option>
-          </select>
+            <i
+              className="bi bi-calendar3 position-absolute text-muted"
+              style={{ left: 10, top: 10, zIndex: 1, pointerEvents: "none" }}
+            />
+            <select
+              className="ps-4"
+              value={filters.expiry}
+              onChange={(e) => handleFilterChange("expiry", e.target.value)}
+            >
+              <option value="all">Expiry: All</option>
+              <option value="expiring">Expiring in 6 Months</option>
+              <option value="expired">Expired</option>
+              <option value="safe">Safe</option>
+            </select>
           </div>
 
           <select
             value={filters.stockStatus}
-            onChange={(e) => handleFilterChange('stockStatus', e.target.value)}
+            onChange={(e) => handleFilterChange("stockStatus", e.target.value)}
           >
             <option value="all">Stock Status: All</option>
             <option value="normal">Normal</option>
@@ -267,13 +325,18 @@ export default function InventoryPage() {
             <input
               type="text"
               placeholder="Supplier name..."
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
             />
             <button
               type="button"
               className="btn-outline-green btn-sm"
               onClick={() => {
-                setFilters({ categoryId: 'all', search: '', expiry: 'all', stockStatus: 'all' });
+                setFilters({
+                  categoryId: "all",
+                  search: "",
+                  expiry: "all",
+                  stockStatus: "all",
+                });
                 setPage(1);
               }}
             >
@@ -304,37 +367,42 @@ export default function InventoryPage() {
       </section>
 
       {canEdit && (
-      <MedicineModal
-        show={showModal}
-        onHide={() => {
-          setShowModal(false);
-          setEditMedicine(null);
-        }}
-        medicine={editMedicine}
-        categories={categories}
-        suppliers={suppliers}
-        onSave={handleSave}
-        saving={saving}
-      />
+        <MedicineModal
+          show={showModal}
+          onHide={() => {
+            setShowModal(false);
+            setEditMedicine(null);
+          }}
+          medicine={editMedicine}
+          categories={categories}
+          suppliers={suppliers}
+          onSave={handleSave}
+          saving={saving}
+        />
       )}
 
       {canEdit && (
-      <Modal show={Boolean(deleteTarget)} onHide={() => setDeleteTarget(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Medicine</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete <strong>{deleteTarget?.displayName}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        <Modal
+          show={Boolean(deleteTarget)}
+          onHide={() => setDeleteTarget(null)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Delete Medicine</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Are you sure you want to delete{" "}
+            <strong>{deleteTarget?.displayName}</strong>?
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
+              Delete
+            </Button>
+          </Modal.Footer>
+        </Modal>
       )}
     </>
   );

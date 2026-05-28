@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
+import { useState, useEffect } from "react";
+import Modal from "react-bootstrap/Modal";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
 
 const emptyForm = {
-  name: '',
-  strengthForm: '',
-  categoryId: '',
-  newCategoryName: '',
-  supplierId: '',
-  newSupplierName: '',
+  name: "",
+  strengthForm: "",
+  categoryId: "",
+  newCategoryName: "",
+  supplierId: "",
+  newSupplierName: "",
   qty: 0,
-  expiryDate: '',
+  expiryDate: "",
   minLimit: 10,
   maxLimit: 500,
-  buyPrice: '',
-  sellPrice: '',
-  shelfNo: '',
-  notes: '',
+  buyPrice: "",
+  sellPrice: "",
+  shelfNo: "",
+  notes: "",
 };
 
 export default function MedicineModal({
@@ -35,20 +35,21 @@ export default function MedicineModal({
   useEffect(() => {
     if (medicine) {
       setForm({
-        name: medicine.name || '',
-        strengthForm: medicine.strengthForm || '',
-        categoryId: medicine.categoryId || '',
-        newCategoryName: '',
-        supplierId: medicine.supplierId || '',
-        newSupplierName: '',
+        name: medicine.name || "",
+        strengthForm: medicine.strengthForm || "",
+        categoryId: medicine.categoryId || "",
+        newCategoryName: "",
+        supplierId: medicine.supplierId || "",
+        newSupplierName: "",
         qty: medicine.qty ?? 0,
-        expiryDate: medicine.expiryDate?.slice?.(0, 10) || medicine.expiryDate || '',
+        expiryDate:
+          medicine.expiryDate?.slice?.(0, 10) || medicine.expiryDate || "",
         minLimit: medicine.minLimit ?? 10,
         maxLimit: medicine.maxLimit ?? 500,
-        buyPrice: medicine.buyPrice ?? '',
-        sellPrice: medicine.sellPrice ?? '',
-        shelfNo: medicine.shelfNo === '—' ? '' : medicine.shelfNo || '',
-        notes: medicine.notes === '—' ? '' : medicine.notes || '',
+        buyPrice: medicine.buyPrice ?? "",
+        sellPrice: medicine.sellPrice ?? "",
+        shelfNo: medicine.shelfNo === "—" ? "" : medicine.shelfNo || "",
+        notes: medicine.notes === "—" ? "" : medicine.notes || "",
       });
     } else {
       setForm(emptyForm);
@@ -57,20 +58,28 @@ export default function MedicineModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'categoryId') {
-      setForm((f) => ({ ...f, categoryId: value, newCategoryName: '' }));
+    if (name === "categoryId") {
+      setForm((f) => ({ ...f, categoryId: value, newCategoryName: "" }));
       return;
     }
-    if (name === 'supplierId') {
-      setForm((f) => ({ ...f, supplierId: value, newSupplierName: '' }));
+    if (name === "supplierId") {
+      setForm((f) => ({ ...f, supplierId: value, newSupplierName: "" }));
       return;
     }
-    if (name === 'newCategoryName') {
-      setForm((f) => ({ ...f, categoryId: value ? '' : f.categoryId, newCategoryName: value }));
+    if (name === "newCategoryName") {
+      setForm((f) => ({
+        ...f,
+        categoryId: value ? "" : f.categoryId,
+        newCategoryName: value,
+      }));
       return;
     }
-    if (name === 'newSupplierName') {
-      setForm((f) => ({ ...f, supplierId: value ? '' : f.supplierId, newSupplierName: value }));
+    if (name === "newSupplierName") {
+      setForm((f) => ({
+        ...f,
+        supplierId: value ? "" : f.supplierId,
+        newSupplierName: value,
+      }));
       return;
     }
     setForm((f) => ({ ...f, [name]: value }));
@@ -99,7 +108,7 @@ export default function MedicineModal({
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
       <Modal.Header closeButton>
-        <Modal.Title>{isEdit ? 'Edit Medicine' : 'Add Medicine'}</Modal.Title>
+        <Modal.Title>{isEdit ? "Edit Medicine" : "Add Medicine"}</Modal.Title>
       </Modal.Header>
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
@@ -107,7 +116,12 @@ export default function MedicineModal({
             <div className="col-md-6">
               <Form.Group>
                 <Form.Label>Medicine Name</Form.Label>
-                <Form.Control name="name" value={form.name} onChange={handleChange} required />
+                <Form.Control
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                />
               </Form.Group>
             </div>
             <div className="col-md-6">
@@ -125,7 +139,11 @@ export default function MedicineModal({
             <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Category</Form.Label>
-                <Form.Select name="categoryId" value={form.categoryId} onChange={handleChange}>
+                <Form.Select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                >
                   <option value="">Select category</option>
                   {categories?.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -145,7 +163,11 @@ export default function MedicineModal({
             <div className="col-md-4">
               <Form.Group>
                 <Form.Label>Supplier</Form.Label>
-                <Form.Select name="supplierId" value={form.supplierId} onChange={handleChange}>
+                <Form.Select
+                  name="supplierId"
+                  value={form.supplierId}
+                  onChange={handleChange}
+                >
                   <option value="">Select supplier</option>
                   {suppliers?.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -268,8 +290,12 @@ export default function MedicineModal({
           <Button variant="secondary" onClick={onHide}>
             Cancel
           </Button>
-          <Button type="submit" className="btn-primary-green border-0" disabled={saving}>
-            {saving ? 'Saving...' : isEdit ? 'Update Medicine' : 'Add Medicine'}
+          <Button
+            type="submit"
+            className="btn-primary-green border-0"
+            disabled={saving}
+          >
+            {saving ? "Saving..." : isEdit ? "Update Medicine" : "Add Medicine"}
           </Button>
         </Modal.Footer>
       </Form>

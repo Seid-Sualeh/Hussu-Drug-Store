@@ -1,13 +1,19 @@
-import { formatINR, formatDate, formatNumber } from '../api/client';
+import { formatINR, formatDate, formatNumber } from "../api/client";
 
 function stockBadgeClass(status) {
-  if (status === 'Normal') return 'normal';
-  if (status === 'Under Stock') return 'under';
-  if (status === 'Over Stock') return 'over';
-  return 'out';
+  if (status === "Normal") return "normal";
+  if (status === "Under Stock") return "under";
+  if (status === "Over Stock") return "over";
+  return "out";
 }
 
-export default function InventoryTable({ items, loading, onEdit, onDelete, canEdit = true }) {
+export default function InventoryTable({
+  items,
+  loading,
+  onEdit,
+  onDelete,
+  canEdit = true,
+}) {
   if (loading) {
     return (
       <div className="table-wrapper p-4 text-center text-muted">
@@ -39,9 +45,9 @@ export default function InventoryTable({ items, loading, onEdit, onDelete, canEd
             <th>Min Limit</th>
             <th>Max Limit</th>
             <th>Stock Status</th>
-            <th>Buy Price (₹)</th>
-            <th>Sell Price (₹)</th>
-            <th>Profit (₹)</th>
+            <th>Buy Price (ETB)</th>
+            <th>Sell Price (ETB)</th>
+            <th>Profit (ETB)</th>
             <th>Profit %</th>
             <th>Supplier</th>
             <th>Shelf No.</th>
@@ -60,17 +66,23 @@ export default function InventoryTable({ items, loading, onEdit, onDelete, canEd
               <td>{formatNumber(row.qty)}</td>
               <td>{formatDate(row.expiryDate)}</td>
               <td>
-                <span className={`pill-badge ${row.expIn6Months === 'Yes' ? 'yes' : 'no'}`}>
+                <span
+                  className={`pill-badge ${row.expIn6Months === "Yes" ? "yes" : "no"}`}
+                >
                   {row.expIn6Months}
                 </span>
               </td>
               <td>
-                <span className={`alert-text ${row.alertType}`}>{row.alert}</span>
+                <span className={`alert-text ${row.alertType}`}>
+                  {row.alert}
+                </span>
               </td>
               <td>{row.minLimit}</td>
               <td>{row.maxLimit}</td>
               <td>
-                <span className={`stock-badge ${stockBadgeClass(row.stockStatus)}`}>
+                <span
+                  className={`stock-badge ${stockBadgeClass(row.stockStatus)}`}
+                >
                   {row.stockStatus}
                 </span>
               </td>
@@ -78,7 +90,7 @@ export default function InventoryTable({ items, loading, onEdit, onDelete, canEd
               <td>{formatINR(row.sellPrice)}</td>
               <td>{formatINR(row.profit)}</td>
               <td>{row.profitPct}</td>
-              <td>{row.supplierName || '—'}</td>
+              <td>{row.supplierName || "—"}</td>
               <td>{row.shelfNo}</td>
               <td>{row.notes}</td>
               {canEdit && (

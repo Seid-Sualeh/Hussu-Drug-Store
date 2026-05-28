@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { formatNumber, api } from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatNumber, api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 export default function Topbar({
   stats,
@@ -12,7 +12,7 @@ export default function Topbar({
   sidebarCollapsed,
 }) {
   const navigate = useNavigate();
-  const [globalSearch, setGlobalSearch] = useState('');
+  const [globalSearch, setGlobalSearch] = useState("");
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 992);
   const [notifCount, setNotifCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -20,8 +20,8 @@ export default function Topbar({
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 992);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -42,10 +42,10 @@ export default function Topbar({
   }, []);
 
   const toggleIcon = isMobile
-    ? 'bi-list'
+    ? "bi-list"
     : sidebarCollapsed
-      ? 'bi-layout-text-sidebar'
-      : 'bi-layout-text-sidebar-reverse';
+      ? "bi-layout-text-sidebar"
+      : "bi-layout-text-sidebar-reverse";
 
   const notifCountDisplay = notifLoading ? null : notifCount;
 
@@ -53,10 +53,10 @@ export default function Topbar({
     <header className="topbar">
       <button
         type="button"
-        className={`topbar-menu-btn ${sidebarCollapsed ? 'is-collapsed' : ''}`}
+        className={`topbar-menu-btn ${sidebarCollapsed ? "is-collapsed" : ""}`}
         onClick={onMenuClick}
-        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <i className={`bi ${toggleIcon}`} />
       </button>
@@ -69,11 +69,13 @@ export default function Topbar({
           value={globalSearch}
           onChange={(e) => setGlobalSearch(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && globalSearch.trim()) {
+            if (e.key === "Enter" && globalSearch.trim()) {
               const q = encodeURIComponent(globalSearch.trim());
               navigate(`/inventory?search=${q}`);
               window.dispatchEvent(
-                new CustomEvent('inventory-search', { detail: globalSearch.trim() })
+                new CustomEvent("inventory-search", {
+                  detail: globalSearch.trim(),
+                }),
               );
             }
           }}
@@ -82,44 +84,51 @@ export default function Topbar({
 
       <div className="topbar-badges">
         {isGuest && (
-          <span className="alert-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>
+          <span
+            className="alert-badge"
+            style={{ background: "#dbeafe", color: "#1d4ed8" }}
+          >
             <i className="bi bi-eye" />
             View only
           </span>
         )}
         <span className="alert-badge low-stock">
           <i className="bi bi-exclamation-triangle-fill" />
-          Low Stock: {statsLoading ? '…' : formatNumber(stats?.lowStock ?? 0)} items
+          Low Stock: {statsLoading
+            ? "…"
+            : formatNumber(stats?.lowStock ?? 0)}{" "}
+          items
         </span>
         <span className="alert-badge expiring">
           <i className="bi bi-clock-history" />
-          Expiring Soon: {statsLoading ? '…' : formatNumber(stats?.expiringIn6Months ?? 0)} items
+          Expiring Soon:{" "}
+          {statsLoading
+            ? "…"
+            : formatNumber(stats?.expiringIn6Months ?? 0)}{" "}
+          items
         </span>
       </div>
 
       <div className="topbar-right">
-        {canEdit && (
-          <button type="button" className="btn-primary-green" onClick={onAddMedicine}>
-            <i className="bi bi-plus-lg" />
-            Add Medicine
-          </button>
-        )}
-
         <button
           type="button"
           className="notification-btn"
           aria-label="Notifications"
-          onClick={() => navigate('/notifications')}
+          onClick={() => navigate("/notifications")}
         >
           <i className="bi bi-bell" />
-          {notifCountDisplay > 0 && <span className="badge-dot">{notifCountDisplay}</span>}
+          {notifCountDisplay > 0 && (
+            <span className="badge-dot">{notifCountDisplay}</span>
+          )}
         </button>
 
         <div className="user-profile">
-          <div className="user-avatar">{user?.avatar_initials || '—'}</div>
+          <div className="user-avatar">{user?.avatar_initials || "—"}</div>
           <div className="user-info">
-            <div className="name">{user?.name || '—'}</div>
-            <div className="role">{user?.role === 'admin' ? 'Admin' : 'Guest'}</div>
+            <div className="name">{user?.name || "—"}</div>
+            <div className="role">
+              {user?.role === "admin" ? "Admin" : "Guest"}
+            </div>
           </div>
         </div>
 

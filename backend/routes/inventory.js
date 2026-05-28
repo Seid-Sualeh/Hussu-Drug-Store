@@ -1,16 +1,26 @@
-import { Router } from 'express';
-import pool from '../config/db.js';
-import { formatMedicineRow, getStockStatus, getExpiryInfo } from '../utils/inventoryHelpers.js';
-import { validateMedicineBody } from '../utils/validateMedicine.js';
+import { Router } from "express";
+import pool from "../config/db.js";
+import {
+  formatMedicineRow,
+  getStockStatus,
+  getExpiryInfo,
+} from "../utils/inventoryHelpers.js";
+import { validateMedicineBody } from "../utils/validateMedicine.js";
 
 const router = Router();
 
 function formatDateYMD(date) {
   if (!date) return null;
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0];
 }
 
-function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDate }) {
+function generateMedicineNotifications({
+  name,
+  qty,
+  minLimit,
+  maxLimit,
+  expiryDate,
+}) {
   const notifications = [];
   const today = new Date().toISOString().slice(0, 10);
   const sixMonths = new Date();
@@ -21,7 +31,7 @@ function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDa
     notifications.push({
       title: `Low stock: ${name}`,
       message: `${name} has only ${qty} unit(s) remaining. Reorder before stock runs out.`,
-      type: 'low_stock',
+      type: "low_stock",
     });
   }
 
@@ -29,7 +39,7 @@ function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDa
     notifications.push({
       title: `Over stock: ${name}`,
       message: `${name} inventory exceeds the maximum of ${maxLimit}. Review ordering levels.`,
-      type: 'over_stock',
+      type: "over_stock",
     });
   }
 
@@ -39,13 +49,13 @@ function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDa
       notifications.push({
         title: `Expired: ${name}`,
         message: `${name} expired on ${expiry}. Remove or mark it immediately.`,
-        type: 'expiry',
+        type: "expiry",
       });
     } else if (expiry <= sixMonthsDate) {
       notifications.push({
         title: `Expiring soon: ${name}`,
         message: `${name} expires on ${expiry}. Plan moving or discounting stock.`,
-        type: 'expiry',
+        type: "expiry",
       });
     }
   }
@@ -56,12 +66,12 @@ function generateMedicineNotifications({ name, qty, minLimit, maxLimit, expiryDa
 async function insertNotifications(items) {
   for (const { title, message, type } of items) {
     const [[existing]] = await pool.query(
-      'SELECT COUNT(*) AS count FROM notifications WHERE title = ? AND message = ? AND type = ? AND is_read = 0',
+      "SELECT COUNT(*) AS count FROM notifications WHERE title = ? AND message = ? AND type = ? AND is_read = 0",
       [title, message, type],
     );
     if (Number(existing.count) === 0) {
       await pool.query(
-        'INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)',
+        "INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)",
         [title, message, type],
       );
     }
@@ -79,40 +89,40 @@ function buildWhere(filters) {
   const conditions = [];
   const params = [];
 
-  if (filters.categoryId && filters.categoryId !== 'all') {
-    conditions.push('m.category_id = ?');
+  if (filters.categoryId && filters.categoryId !== "all") {
+    conditions.push("m.category_id = ?");
     params.push(filters.categoryId);
   }
   if (filters.search) {
     conditions.push(
-      '(m.name LIKE ? OR m.strength_form LIKE ? OR s.name LIKE ? OR c.name LIKE ?)'
+      "(m.name LIKE ? OR m.strength_form LIKE ? OR s.name LIKE ? OR c.name LIKE ?)",
     );
     const term = `%${filters.search}%`;
     params.push(term, term, term, term);
   }
-  if (filters.expiry === 'expiring') {
-    conditions.push('m.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 6 MONTH)');
-    conditions.push('m.expiry_date >= CURDATE()');
-  } else if (filters.expiry === 'expired') {
-    conditions.push('m.expiry_date < CURDATE()');
-  } else if (filters.expiry === 'safe') {
-    conditions.push('m.expiry_date > DATE_ADD(CURDATE(), INTERVAL 6 MONTH)');
+  if (filters.expiry === "expiring") {
+    conditions.push("m.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 6 MONTH)");
+    conditions.push("m.expiry_date >= CURDATE()");
+  } else if (filters.expiry === "expired") {
+    conditions.push("m.expiry_date < CURDATE()");
+  } else if (filters.expiry === "safe") {
+    conditions.push("m.expiry_date > DATE_ADD(CURDATE(), INTERVAL 6 MONTH)");
   }
-  if (filters.stockStatus === 'under') {
-    conditions.push('m.qty > 0 AND m.qty < m.min_limit');
-  } else if (filters.stockStatus === 'over') {
-    conditions.push('m.qty > m.max_limit');
-  } else if (filters.stockStatus === 'out') {
-    conditions.push('m.qty = 0');
-  } else if (filters.stockStatus === 'normal') {
-    conditions.push('m.qty >= m.min_limit AND m.qty <= m.max_limit');
+  if (filters.stockStatus === "under") {
+    conditions.push("m.qty > 0 AND m.qty < m.min_limit");
+  } else if (filters.stockStatus === "over") {
+    conditions.push("m.qty > m.max_limit");
+  } else if (filters.stockStatus === "out") {
+    conditions.push("m.qty = 0");
+  } else if (filters.stockStatus === "normal") {
+    conditions.push("m.qty >= m.min_limit AND m.qty <= m.max_limit");
   }
 
-  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   return { where, params };
 }
 
-router.get('/stats', async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
     const sessionUser = req.user;
     const [[totals]] = await pool.query(`
@@ -131,7 +141,7 @@ router.get('/stats', async (req, res) => {
     let notificationCount = 0;
     try {
       const [[notif]] = await pool.query(
-        'SELECT COUNT(*) AS count FROM notifications WHERE is_read = 0'
+        "SELECT COUNT(*) AS count FROM notifications WHERE is_read = 0",
       );
       notificationCount = Number(notif.count);
     } catch {
@@ -150,13 +160,13 @@ router.get('/stats', async (req, res) => {
       totalProfit: Number(totals.totalProfit),
       user: sessionUser
         ? {
-          id: sessionUser.id,
-          name: sessionUser.name,
-          role: sessionUser.role,
-          avatar_initials: sessionUser.avatar_initials,
-          email: sessionUser.email,
-          notification_count: notificationCount,
-        }
+            id: sessionUser.id,
+            name: sessionUser.name,
+            role: sessionUser.role,
+            avatar_initials: sessionUser.avatar_initials,
+            email: sessionUser.email,
+            notification_count: notificationCount,
+          }
         : null,
     };
 
@@ -166,10 +176,10 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-router.get('/categories', async (req, res) => {
+router.get("/categories", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, code, name, sort_order FROM categories ORDER BY sort_order ASC, id ASC'
+      "SELECT id, code, name, sort_order FROM categories ORDER BY sort_order ASC, id ASC",
     );
     res.json(rows);
   } catch (err) {
@@ -177,19 +187,24 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-router.get('/suppliers', async (req, res) => {
+router.get("/suppliers", async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, name FROM suppliers ORDER BY name');
+    const [rows] = await pool.query(
+      "SELECT id, name FROM suppliers ORDER BY name",
+    );
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const limit = Math.min(
+      500,
+      Math.max(1, parseInt(req.query.limit, 10) || 10),
+    );
     const offset = (page - 1) * limit;
 
     const filters = {
@@ -206,13 +221,13 @@ router.get('/', async (req, res) => {
        LEFT JOIN categories c ON m.category_id = c.id
        LEFT JOIN suppliers s ON m.supplier_id = s.id
        ${where}`,
-      params
+      params,
     );
     const total = countRows[0].total;
 
     const [rows] = await pool.query(
       `${BASE_SELECT} ${where} ORDER BY m.id ASC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+      [...params, limit, offset],
     );
 
     const items = rows.map((row, i) => formatMedicineRow(row, offset + i + 1));
@@ -233,7 +248,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/search-global', async (req, res) => {
+router.get("/search-global", async (req, res) => {
   try {
     const q = req.query.q?.trim();
     if (!q) return res.json([]);
@@ -242,7 +257,7 @@ router.get('/search-global', async (req, res) => {
       `${BASE_SELECT}
        WHERE m.name LIKE ? OR m.strength_form LIKE ? OR c.name LIKE ? OR s.name LIKE ?
        LIMIT 10`,
-      [term, term, term, term]
+      [term, term, term, term],
     );
     res.json(rows.map((r, i) => formatMedicineRow(r, i + 1)));
   } catch (err) {
@@ -250,21 +265,24 @@ router.get('/search-global', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [req.params.id]);
-    if (!rows.length) return res.status(404).json({ error: 'Medicine not found' });
+    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [
+      req.params.id,
+    ]);
+    if (!rows.length)
+      return res.status(404).json({ error: "Medicine not found" });
     res.json(formatMedicineRow(rows[0], 1));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const validation = validateMedicineBody(req.body);
     if (!validation.ok) {
-      return res.status(400).json({ error: validation.errors.join('. ') });
+      return res.status(400).json({ error: validation.errors.join(". ") });
     }
     const {
       name,
@@ -306,25 +324,27 @@ router.post('/', async (req, res) => {
         sellPrice,
         shelfNo || null,
         notes || null,
-      ]
+      ],
     );
 
     if (notifications.length) {
       await insertNotifications(notifications);
     }
 
-    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [result.insertId]);
+    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [
+      result.insertId,
+    ]);
     res.status(201).json(formatMedicineRow(rows[0], 1));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const validation = validateMedicineBody(req.body);
     if (!validation.ok) {
-      return res.status(400).json({ error: validation.errors.join('. ') });
+      return res.status(400).json({ error: validation.errors.join(". ") });
     }
     const {
       name,
@@ -369,25 +389,31 @@ router.put('/:id', async (req, res) => {
         shelfNo || null,
         notes || null,
         req.params.id,
-      ]
+      ],
     );
 
     if (notifications.length) {
       await insertNotifications(notifications);
     }
 
-    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [req.params.id]);
-    if (!rows.length) return res.status(404).json({ error: 'Medicine not found' });
+    const [rows] = await pool.query(`${BASE_SELECT} WHERE m.id = ?`, [
+      req.params.id,
+    ]);
+    if (!rows.length)
+      return res.status(404).json({ error: "Medicine not found" });
     res.json(formatMedicineRow(rows[0], 1));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM medicines WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Medicine not found' });
+    const [result] = await pool.query("DELETE FROM medicines WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Medicine not found" });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

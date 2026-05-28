@@ -237,7 +237,7 @@ export default function MedicineModal({
             </div>
             <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Buy Price (₹)</Form.Label>
+                <Form.Label>Buy Price (ETB)</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"
@@ -250,7 +250,7 @@ export default function MedicineModal({
             </div>
             <div className="col-md-4">
               <Form.Group>
-                <Form.Label>Sell Price (₹)</Form.Label>
+                <Form.Label>Sell Price (ETB)</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"

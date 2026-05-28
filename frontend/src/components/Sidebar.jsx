@@ -12,7 +12,7 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${open ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-logo">
-        <div className="logo-icon">
+        <div className="logo-icon moon-icon">
           <i className="bi bi-moon-stars-fill" />
         </div>
         {!collapsed && (

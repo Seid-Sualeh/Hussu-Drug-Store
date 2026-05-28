@@ -134,6 +134,24 @@ export default function DashboardPage() {
     ],
   };
 
+  const profitChartColors = [
+    "#059669",
+    "#10b981",
+    "#34d399",
+    "#6ee7b7",
+    "#a7f3d0",
+    "#0ea5e9",
+    "#06b6d4",
+    "#14b8a6",
+    "#f59e0b",
+    "#ef4444",
+    "#f87171",
+    "#fb923c",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+  ];
+
   const profitChartData = {
     labels: profitByCategory.map((p) =>
       p.category.length > 22 ? `${p.category.slice(0, 20)}…` : p.category,
@@ -142,8 +160,11 @@ export default function DashboardPage() {
       {
         label: "Profit (ETB)",
         data: profitByCategory.map((p) => p.profit),
-        backgroundColor: "#10b981",
+        backgroundColor: profitByCategory.map(
+          (_, i) => profitChartColors[i % profitChartColors.length],
+        ),
         borderRadius: 6,
+        borderSkipped: false,
       },
     ],
   };

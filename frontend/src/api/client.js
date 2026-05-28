@@ -1,4 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const rawApiBase = import.meta.env.VITE_API_BASE || "/api";
+const normalizedBase = rawApiBase.trim().replace(/\/+$/, "");
+const API_BASE = normalizedBase.endsWith("/api")
+  ? normalizedBase
+  : `${normalizedBase}/api`;
 
 function getToken() {
   return localStorage.getItem("medicare_auth_token");

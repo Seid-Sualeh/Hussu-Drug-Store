@@ -13,15 +13,39 @@ export function clearAuthStorage() {
   localStorage.removeItem("medicare_auth_user");
 }
 
+async function fetchWithTimeout(resource, options = {}) {
+  const timeoutMs = options.timeout ?? 15000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(resource, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function request(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...options.headers };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  let res;
+  try {
+    res = await fetchWithTimeout(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("Request timed out. Please check your connection.");
+    }
+    if (err instanceof TypeError) {
+      throw new Error("Network error. Please check your connection.");
+    }
+    throw err;
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (res.status === 401) {
@@ -49,16 +73,28 @@ async function request(path, options = {}) {
 export const api = {
   getMe: () => request("/auth/me", { skipAuthRedirect: true }),
 
-  login: (username, password) =>
-    fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    }).then(async (res) => {
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Login failed");
-      return data;
-    }),
+  login: async (username, password) => {
+    let res;
+    try {
+      res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        throw new Error("Network timeout. Please check your connection.");
+      }
+      if (err instanceof TypeError) {
+        throw new Error("Network error. Please check your connection.");
+      }
+      throw err;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Login failed");
+    return data;
+  },
 
   getDashboard: () => request("/dashboard"),
   getStats: () => request("/inventory/stats"),

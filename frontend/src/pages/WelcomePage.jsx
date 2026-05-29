@@ -1,40 +1,55 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import Form from 'react-bootstrap/Form';
-import { useAuth } from '../context/AuthContext';
-import { api } from '../api/client';
-import '../styles/welcome.css';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Form from "react-bootstrap/Form";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { api } from "../api/client";
+import "../styles/welcome.css";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, sessionChecked } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (sessionChecked && isAuthenticated) navigate('/dashboard', { replace: true });
+    if (sessionChecked && isAuthenticated)
+      navigate("/dashboard", { replace: true });
   }, [isAuthenticated, sessionChecked, navigate]);
 
   useEffect(() => {
     if (location.state?.sessionExpired) {
-      setError(location.state.message || 'Session expired. Please sign in again.');
+      setError(
+        location.state.message || "Session expired. Please sign in again.",
+      );
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    if (!navigator.onLine) {
+      const message = "Network offline. Please connect to the internet to sign in.";
+      setError(message);
+      showToast(message, "warning");
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await api.login(username.trim(), password);
       login(data.token, data.user);
-      navigate('/dashboard', { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed');
+      const message = err.message || "Login failed";
+      setError(message);
+      showToast(message, "danger");
     } finally {
       setLoading(false);
     }
@@ -63,22 +78,48 @@ export default function WelcomePage() {
               required
             />
           </Form.Group>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3 password-input-wrapper">
             <Form.Label>Password</Form.Label>
             <Form.Control
-              type="password"
+              type={passwordVisible ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
               autoComplete="current-password"
               required
             />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              aria-label={passwordVisible ? "Hide password" : "Show password"}
+            >
+              <i className={passwordVisible ? "bi bi-eye-slash" : "bi bi-eye"} />
+            </button>
           </Form.Group>
-          {error && <div className="alert alert-danger py-2 welcome-error">{error}</div>}
+          {error && (
+            <div className="alert alert-danger py-2 welcome-error">{error}</div>
+          )}
           <button type="submit" className="welcome-btn" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? "Signing in…" : "Sign In"}
           </button>
         </Form>
+        <div className="demo-credentials">
+          <div className="demo-credentials-header">
+            <i className="bi bi-info-circle" />
+            <span>Demo credentials to see the application in action</span>
+          </div>
+          <div className="demo-credentials-body">
+            <div className="credential-item">
+              <span className="credential-label">Username</span>
+              <code className="credential-value">storegust</code>
+            </div>
+            <div className="credential-item">
+              <span className="credential-label">Password</span>
+              <code className="credential-value">hussuguest</code>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

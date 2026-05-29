@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { formatETB, formatNumber } from '../api/client';
+import { NavLink } from "react-router-dom";
+import { formatETB, formatNumber } from "../api/client";
 
 export default function Sidebar({
   navRoutes,
@@ -10,7 +10,9 @@ export default function Sidebar({
   onClose,
 }) {
   return (
-    <aside className={`sidebar ${open ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
+    <aside
+      className={`sidebar ${open ? "open" : ""} ${collapsed ? "collapsed" : ""}`}
+    >
       <div className="sidebar-logo">
         <div className="logo-icon moon-icon">
           <i className="bi bi-moon-stars-fill" />
@@ -29,12 +31,16 @@ export default function Sidebar({
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            className={({ isActive }) =>
+              `sidebar-link ${isActive ? "active" : ""}`
+            }
             onClick={onClose}
             title={collapsed ? item.title : undefined}
           >
             <i className={`bi ${item.icon}`} />
-            {!collapsed && <span className="sidebar-link-text">{item.title}</span>}
+            {!collapsed && (
+              <span className="sidebar-link-text">{item.title}</span>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -50,13 +56,17 @@ export default function Sidebar({
             ) : stats ? (
               formatETB(stats.inventoryValue)
             ) : (
-              '—'
+              "—"
             )}
           </div>
           <div className="sub">
-            Total Items:{' '}
+            Total Items:{" "}
             <strong>
-              {statsLoading ? '…' : stats ? formatNumber(stats.totalItems) : '—'}
+              {statsLoading
+                ? "…"
+                : stats
+                  ? formatNumber(stats.totalItems)
+                  : "—"}
             </strong>
           </div>
           <NavLink to="/reports" onClick={onClose}>
@@ -67,10 +77,13 @@ export default function Sidebar({
       )}
 
       {collapsed && (
-        <div className="sidebar-card-mini" title={`Inventory: ${stats ? formatETB(stats.inventoryValue) : '—'}`}>
+        <div
+          className="sidebar-card-mini"
+          title={`Inventory: ${stats ? formatETB(stats.inventoryValue) : "—"}`}
+        >
           <i className="bi bi-safe" />
           <span className="mini-value">
-            {statsLoading ? '…' : stats ? formatNumber(stats.totalItems) : '—'}
+            {statsLoading ? "…" : stats ? formatNumber(stats.totalItems) : "—"}
           </span>
         </div>
       )}

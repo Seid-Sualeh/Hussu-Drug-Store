@@ -36,11 +36,11 @@ CREATE TABLE suppliers (
 );
 
 CREATE TABLE medicines (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(200) NOT NULL,
-  unit VARCHAR(60),
-  strength_form VARCHAR(255) NOT NULL,
-  category_id INT,
+   id INT AUTO_INCREMENT PRIMARY KEY,
+   name VARCHAR(200) NOT NULL,
+   unit VARCHAR(60),
+   strength_form VARCHAR(255) NOT NULL,
+   category_id INT,
   supplier_id INT,
   qty INT NOT NULL DEFAULT 0,
   expiry_date DATE NOT NULL,

@@ -14,7 +14,7 @@ import reportsRoutes from "./routes/reports.js";
 import notificationsRoutes from "./routes/notifications.js";
 import authRoutes from "./routes/auth.js";
 import { protectApiRoutes } from "./middleware/protectRoutes.js";
-import { pingDatabase } from "./config/db.js";
+import { pingDatabase, ensureMedicineUnitColumn } from "./config/db.js";
 
 dotenv.config();
 
@@ -155,6 +155,7 @@ async function startServer() {
   try {
     await pingDatabase();
     console.log("[DB] Connected successfully.");
+    await ensureMedicineUnitColumn();
   } catch (err) {
     console.error("[DB] Database connection failed:", err);
     process.exit(1);

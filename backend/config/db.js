@@ -70,4 +70,19 @@ export async function pingDatabase() {
   }
 }
 
+export async function ensureMedicineUnitColumn() {
+  const conn = await pool.getConnection();
+  try {
+    const [rows] = await conn.query("SHOW COLUMNS FROM medicines LIKE 'unit'");
+    if (rows.length === 0) {
+      await conn.query(
+        "ALTER TABLE medicines ADD COLUMN unit VARCHAR(60) NULL AFTER name",
+      );
+      console.log("[DB] Added missing medicines.unit column");
+    }
+  } finally {
+    conn.release();
+  }
+}
+
 export default pool;

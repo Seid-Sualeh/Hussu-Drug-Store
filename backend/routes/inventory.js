@@ -286,6 +286,7 @@ router.post("/", async (req, res) => {
     }
     const {
       name,
+      unit,
       strengthForm,
       categoryId,
       supplierId,
@@ -309,10 +310,11 @@ router.post("/", async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO medicines
-       (name, strength_form, category_id, supplier_id, qty, expiry_date, min_limit, max_limit, buy_price, sell_price, shelf_no, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (name, unit, strength_form, category_id, supplier_id, qty, expiry_date, min_limit, max_limit, buy_price, sell_price, shelf_no, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
+        unit || null,
         strengthForm,
         categoryId || null,
         supplierId || null,
@@ -348,6 +350,7 @@ router.put("/:id", async (req, res) => {
     }
     const {
       name,
+      unit,
       strengthForm,
       categoryId,
       supplierId,
@@ -371,12 +374,13 @@ router.put("/:id", async (req, res) => {
 
     await pool.query(
       `UPDATE medicines SET
-        name = ?, strength_form = ?, category_id = ?, supplier_id = ?,
+        name = ?, unit = ?, strength_form = ?, category_id = ?, supplier_id = ?,
         qty = ?, expiry_date = ?, min_limit = ?, max_limit = ?,
         buy_price = ?, sell_price = ?, shelf_no = ?, notes = ?
        WHERE id = ?`,
       [
         name,
+        unit || null,
         strengthForm,
         categoryId || null,
         supplierId || null,

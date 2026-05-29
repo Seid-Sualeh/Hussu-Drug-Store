@@ -38,6 +38,7 @@ export default function InventoryTable({
           <tr>
             <th>#</th>
             <th>Medicine Name</th>
+            <th>Unit</th>
             <th>Qty</th>
             <th>Expiry Date</th>
             <th>Exp. in 6 Months?</th>
@@ -63,6 +64,7 @@ export default function InventoryTable({
                 <div className="name">{row.name}</div>
                 <div className="form">{row.strengthForm}</div>
               </td>
+              <td>{row.unit || "—"}</td>
               <td>{formatNumber(row.qty)}</td>
               <td>{formatDate(row.expiryDate)}</td>
               <td>

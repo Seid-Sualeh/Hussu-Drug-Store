@@ -72,7 +72,7 @@ app.use(
           },
         },
       })
-    : helmet()
+    : helmet(),
 );
 app.use(express.json({ limit: "1mb" }));
 app.set("trust proxy", isProduction ? 1 : false);
@@ -102,8 +102,26 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", app: "Hussu Drug Store API" });
+
+// Health check with database status
+app.get("/api/health", async (req, res) => {
+  try {
+    await pingDatabase();
+    res.json({
+      status: "ok",
+      app: "Hussu Drug Store API",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("[Health] DB connection failed:", err.message);
+    res.status(503).json({
+      status: "error",
+      app: "Hussu Drug Store API",
+      database: "disconnected",
+      error: err.message,
+    });
+  }
 });
 
 app.get("/", (req, res) => {
@@ -145,6 +163,30 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
+
+  // Keep database alive - ping periodically to prevent idle timeout (Aiven free tier)
+  const keepAliveEnabled = process.env.DB_KEEPALIVE_ENABLED !== "false";
+  const keepAliveIntervalMin = parseInt(
+    process.env.DB_KEEPALIVE_INTERVAL || "5",
+    10,
+  );
+  const keepAliveIntervalMs = keepAliveIntervalMin * 60 * 1000;
+
+  if (keepAliveEnabled) {
+    console.log(
+      `[DB] Keep-alive enabled: ping every ${keepAliveIntervalMin} minute(s)`,
+    );
+    setInterval(async () => {
+      try {
+        await pingDatabase();
+        console.log(
+          `[DB] Keep-alive ping successful at ${new Date().toISOString()}`,
+        );
+      } catch (err) {
+        console.error(`[DB] Keep-alive ping failed: ${err.message}`);
+      }
+    }, keepAliveIntervalMs);
+  }
 }
 
 startServer();

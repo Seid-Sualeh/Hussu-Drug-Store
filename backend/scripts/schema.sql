@@ -1,11 +1,11 @@
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS sales;
-DROP TABLE IF EXISTS stock_movements;
-DROP TABLE IF EXISTS settings;
-DROP TABLE IF EXISTS medicines;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS suppliers;
-DROP TABLE IF EXISTS users;
+-- DROP TABLE IF EXISTS notifications;
+-- DROP TABLE IF EXISTS sales;
+-- DROP TABLE IF EXISTS stock_movements;
+-- DROP TABLE IF EXISTS settings;
+-- DROP TABLE IF EXISTS medicines;
+-- DROP TABLE IF EXISTS categories;
+-- DROP TABLE IF EXISTS suppliers;
+-- DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,6 +38,7 @@ CREATE TABLE suppliers (
 CREATE TABLE medicines (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
+  unit VARCHAR(60),
   strength_form VARCHAR(255) NOT NULL,
   category_id INT,
   supplier_id INT,

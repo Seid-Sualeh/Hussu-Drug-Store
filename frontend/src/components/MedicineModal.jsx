@@ -5,6 +5,7 @@ import Button from "react-bootstrap/Button";
 
 const emptyForm = {
   name: "",
+  unit: "",
   strengthForm: "",
   categoryId: "",
   newCategoryName: "",
@@ -36,6 +37,7 @@ export default function MedicineModal({
     if (medicine) {
       setForm({
         name: medicine.name || "",
+        unit: medicine.unit || "",
         strengthForm: medicine.strengthForm || "",
         categoryId: medicine.categoryId || "",
         newCategoryName: "",
@@ -89,6 +91,7 @@ export default function MedicineModal({
     e.preventDefault();
     onSave({
       name: form.name,
+      unit: form.unit?.trim() || null,
       strengthForm: form.strengthForm,
       categoryId: form.categoryId ? Number(form.categoryId) : null,
       newCategoryName: form.newCategoryName?.trim() || null,
@@ -121,6 +124,17 @@ export default function MedicineModal({
                   value={form.name}
                   onChange={handleChange}
                   required
+                />
+              </Form.Group>
+            </div>
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label>Unit</Form.Label>
+                <Form.Control
+                  name="unit"
+                  value={form.unit}
+                  onChange={handleChange}
+                  placeholder="e.g. bottle, box, pack, carton"
                 />
               </Form.Group>
             </div>

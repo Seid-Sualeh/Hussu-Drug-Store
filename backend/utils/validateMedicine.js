@@ -26,14 +26,18 @@ function isValidDate(v) {
 export function validateMedicineBody(body, { partial = false } = {}) {
   const errors = [];
   const name = trimStr(body?.name, 255);
+  const unit = trimStr(body?.unit, 60);
   const strengthForm = trimStr(body?.strengthForm, 255);
 
   if (!partial) {
-    if (!name) errors.push('Medicine name is required');
-    if (!strengthForm) errors.push('Strength / form is required');
-    if (!isValidDate(body?.expiryDate)) errors.push('Valid expiry date is required');
-    if (parseMoney(body?.buyPrice) == null) errors.push('Valid buy price is required');
-    if (parseMoney(body?.sellPrice) == null) errors.push('Valid sell price is required');
+    if (!name) errors.push("Medicine name is required");
+    if (!strengthForm) errors.push("Strength / form is required");
+    if (!isValidDate(body?.expiryDate))
+      errors.push("Valid expiry date is required");
+    if (parseMoney(body?.buyPrice) == null)
+      errors.push("Valid buy price is required");
+    if (parseMoney(body?.sellPrice) == null)
+      errors.push("Valid sell price is required");
   }
 
   const qty = parsePositiveInt(body?.qty, partial ? undefined : 0);
@@ -41,22 +45,22 @@ export function validateMedicineBody(body, { partial = false } = {}) {
   const maxLimit = parsePositiveInt(body?.maxLimit, partial ? undefined : 500);
 
   if (minLimit != null && maxLimit != null && minLimit > maxLimit) {
-    errors.push('Min limit cannot exceed max limit');
+    errors.push("Min limit cannot exceed max limit");
   }
 
   const buyPrice = body?.buyPrice != null ? parseMoney(body.buyPrice) : null;
   const sellPrice = body?.sellPrice != null ? parseMoney(body.sellPrice) : null;
   if (buyPrice != null && sellPrice != null && sellPrice < buyPrice) {
-    errors.push('Sell price should not be less than buy price');
+    errors.push("Sell price should not be less than buy price");
   }
 
   const categoryId = body?.categoryId ? parseInt(body.categoryId, 10) : null;
   const supplierId = body?.supplierId ? parseInt(body.supplierId, 10) : null;
   if (body?.categoryId && (Number.isNaN(categoryId) || categoryId < 1)) {
-    errors.push('Invalid category');
+    errors.push("Invalid category");
   }
   if (body?.supplierId && (Number.isNaN(supplierId) || supplierId < 1)) {
-    errors.push('Invalid supplier');
+    errors.push("Invalid supplier");
   }
 
   if (errors.length) {
@@ -74,6 +78,7 @@ export function validateMedicineBody(body, { partial = false } = {}) {
   if (body?.maxLimit !== undefined) data.maxLimit = maxLimit;
   if (body?.buyPrice !== undefined) data.buyPrice = buyPrice;
   if (body?.sellPrice !== undefined) data.sellPrice = sellPrice;
+  if (body?.unit !== undefined) data.unit = unit;
   if (body?.shelfNo !== undefined) data.shelfNo = trimStr(body.shelfNo, 50);
   if (body?.notes !== undefined) data.notes = trimStr(body.notes, 1000);
 

@@ -135,21 +135,21 @@ export default function DashboardPage() {
   };
 
   const profitChartColors = [
-    "#059669",
-    "#10b981",
-    "#34d399",
-    "#6ee7b7",
-    "#a7f3d0",
-    "#0ea5e9",
-    "#06b6d4",
-    "#14b8a6",
+    "#4f46e5",
     "#f59e0b",
+    "#10b981",
     "#ef4444",
-    "#f87171",
-    "#fb923c",
     "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
+    "#0ea5e9",
+    "#f472b6",
+    "#fb923c",
+    "#14b8a6",
+    "#22c55e",
+    "#e11d48",
+    "#0f766e",
+    "#7c3aed",
+    "#f97316",
+    "#0284c7",
   ];
 
   const profitChartData = {
@@ -163,6 +163,10 @@ export default function DashboardPage() {
         backgroundColor: profitByCategory.map(
           (_, i) => profitChartColors[i % profitChartColors.length],
         ),
+        borderColor: profitByCategory.map(
+          (_, i) => `${profitChartColors[i % profitChartColors.length]}CC`,
+        ),
+        borderWidth: 1,
         borderRadius: 6,
         borderSkipped: false,
       },
